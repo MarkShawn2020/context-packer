@@ -70,12 +70,16 @@ ctxpack /path/to/project --ignore "*.log" "temp/*" "private/"
 # 调整大小限制
 ctxpack /path/to/project --max-size 20 --max-files 200
 
+# 限制目录深度
+ctxpack /path/to/project --max-depth 3
+
 # 完整示例
 ctxpack ~/my-react-app \
   -o react_project_context.md \
   --ignore "*.test.js" "coverage/" \
   --max-size 15 \
-  --max-files 150
+  --max-files 150 \
+  --max-depth 4
 ```
 
 ## 输出格式
@@ -165,6 +169,7 @@ export const Button = ({ children, onClick }) => {
 | `--ignore` | 额外忽略模式 | 无 |
 | `--max-size` | 最大总大小(MB) | 10 |
 | `--max-files` | 最大文件数量 | 100 |
+| `-L, --max-depth` | 最大目录层级深度 | 无限制 |
 
 ## 注意事项
 
