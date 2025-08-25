@@ -15,6 +15,8 @@ from datetime import datetime
 
 class ContextPacker:
     def __init__(self):
+        self.follow_symlinks = True  # 是否跟随软链接
+        self.visited_paths = set()  # 防止循环引用
         self.default_ignore_patterns = {
             # 版本控制
             '.git', '.svn', '.hg',
@@ -89,6 +91,11 @@ class ContextPacker:
         
         def get_file_status_symbol(path: Path) -> str:
             """获取文件状态符号"""
+            if path.is_symlink():
+                if path.is_dir():
+                    return " 🔗📁"  # 软链接目录
+                else:
+                    return " 🔗"  # 软链接文件
             if path.is_dir():
                 return ""
             
@@ -119,6 +126,20 @@ class ContextPacker:
             lines.append(f"{prefix}{connector}{path.name}{status_symbol}")
             
             if path.is_dir():
+                # 如果是软链接目录且不跟随软链接，则不展开其内容
+                if path.is_symlink() and not self.follow_symlinks:
+                    return lines
+                
+                # 处理软链接目录
+                real_path = path.resolve() if path.is_symlink() and self.follow_symlinks else path
+                
+                # 防止循环引用
+                if real_path in self.visited_paths:
+                    lines.append(f"{prefix}    ⚠️ [循环引用，已跳过]")
+                    return lines
+                
+                self.visited_paths.add(real_path)
+                
                 try:
                     children = sorted([p for p in path.iterdir() 
                                      if not self.should_ignore(p, ignore_patterns)])
@@ -128,6 +149,8 @@ class ContextPacker:
                         lines.extend(build_tree(child, prefix + extension, is_child_last, current_depth + 1))
                 except PermissionError:
                     pass
+                finally:
+                    self.visited_paths.discard(real_path)
             
             return lines
         
@@ -162,6 +185,45 @@ class ContextPacker:
         except ValueError:
             return 0
     
+    def collect_files_recursive(self, path: Path, root_path: Path, ignore_patterns: Set[str], 
+                                visited: Set[Path] = None) -> List[Path]:
+        """递归收集文件，支持软链接"""
+        if visited is None:
+            visited = set()
+        
+        files = []
+        real_path = path.resolve() if path.is_symlink() else path
+        
+        # 防止循环引用
+        if real_path in visited:
+            return files
+        visited.add(real_path)
+        
+        try:
+            for item in path.iterdir():
+                if self.should_ignore(item, ignore_patterns):
+                    continue
+                
+                if item.is_symlink():
+                    # 处理软链接
+                    if self.follow_symlinks:
+                        if item.is_dir():
+                            # 递归处理软链接目录
+                            files.extend(self.collect_files_recursive(item, root_path, ignore_patterns, visited))
+                        else:
+                            # 包含软链接文件
+                            files.append(item)
+                elif item.is_file():
+                    # 普通文件
+                    files.append(item)
+                elif item.is_dir():
+                    # 普通目录，递归处理
+                    files.extend(self.collect_files_recursive(item, root_path, ignore_patterns, visited))
+        except (PermissionError, OSError):
+            pass
+        
+        return files
+    
     def collect_files(self, root_path: Path, ignore_patterns: Set[str]) -> tuple[List[Dict], Dict[Path, str]]:
         """收集需要打包的文件并返回文件状态信息"""
         files = []
@@ -169,9 +231,9 @@ class ContextPacker:
         skipped_files = {'too_large': 0, 'ignored': 0, 'binary': 0, 'limit': 0, 'depth': 0}
         file_status = {}  # 记录每个文件的状态
         
-        # 收集所有文件用于统计
-        all_files = list(root_path.rglob('*'))
-        text_files = [f for f in all_files if f.is_file()]
+        # 递归收集所有文件（支持软链接）
+        all_files = self.collect_files_recursive(root_path, root_path, ignore_patterns)
+        text_files = [f for f in all_files if f.is_file() or (f.is_symlink() and f.exists())]
         
         if self.verbose:
             print(f"📂 扫描项目: {root_path.name}")
@@ -341,6 +403,9 @@ class ContextPacker:
         """生成markdown格式的项目内容"""
         project_name = root_path.name
         
+        # 重置已访问路径集合
+        self.visited_paths = set()
+        
         # 收集文件和状态信息
         files, file_status = self.collect_files(root_path, ignore_patterns)
         
@@ -356,7 +421,7 @@ class ContextPacker:
 {file_tree}
 ```
 
-### 文件状态说明\n\n- ✅ 高优先级文件（已包含）：README、package.json、配置文件等\n- ☑️ 中优先级文件（已包含）：代码文件（.py、.js、.ts等）  \n- ✅ 低优先级文件（已包含）：文档、配置等其他文件\n- ⏭️ 跳过的文件：被忽略规则排除的文件\n- 💾 二进制文件：图片、视频、压缩包等\n- 📊 文件过大：超过大小限制的文件  \n- 🚫 超出限制：超过文件数量限制的文件\n\n## 项目文件内容
+### 文件状态说明\n\n- ✅ 高优先级文件（已包含）：README、package.json、配置文件等\n- ☑️ 中优先级文件（已包含）：代码文件（.py、.js、.ts等）  \n- ✅ 低优先级文件（已包含）：文档、配置等其他文件\n- 🔗 软链接文件：指向其他位置的符号链接\n- 🔗📁 软链接目录：指向其他目录的符号链接\n- ⏭️ 跳过的文件：被忽略规则排除的文件\n- 💾 二进制文件：图片、视频、压缩包等\n- 📊 文件过大：超过大小限制的文件  \n- 🚫 超出限制：超过文件数量限制的文件\n- ⚠️ 循环引用：检测到的循环软链接\n\n## 项目文件内容
 
 本文档包含了 {len(files)} 个主要文件的内容。
 
@@ -436,6 +501,10 @@ def main():
                        help='显示详细处理信息')
     parser.add_argument('-L', '--max-depth', type=int,
                        help='最大目录层级深度（默认：无限制）')
+    parser.add_argument('--follow-symlinks', action='store_true', default=True,
+                       help='是否跟随软链接目录（默认：是）')
+    parser.add_argument('--no-follow-symlinks', action='store_true',
+                       help='不跟随软链接目录')
     
     args = parser.parse_args()
     
@@ -443,6 +512,7 @@ def main():
     packer.max_total_size = args.max_size * 1024 * 1024
     packer.max_depth = args.max_depth
     packer.verbose = args.verbose
+    packer.follow_symlinks = not args.no_follow_symlinks
     
     try:
         start_time = datetime.now()
