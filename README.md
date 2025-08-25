@@ -1,183 +1,204 @@
 # Context Packer
 
-将项目文件夹自动打包成单个markdown文件，便于AI模型(如Gemini)一次性分析整个项目。
+A powerful Python tool that intelligently packages project directories into a single markdown file, optimized for AI analysis and code review.
 
-## 功能特点
+## ✨ Features
 
-- 🗂️ **智能文件筛选**: 自动忽略不重要的文件（node_modules、.git、编译产物等）
-- 📏 **大小控制**: 智能压缩和截断，避免超出AI模型限制
-- 🌳 **项目结构**: 生成清晰的文件树展示项目结构
-- 📝 **Markdown格式**: 输出格式化的markdown，便于AI理解
-- ⚙️ **高度可配置**: 支持自定义忽略规则和大小限制
+- **🔗 Symlink Support**: Recursively follows symbolic links with circular reference detection
+- **🎯 Smart Filtering**: Automatically ignores build artifacts, dependencies, and system files
+- **📊 Size Management**: Intelligent file prioritization and content truncation
+- **🌳 Visual Tree**: Clear project structure visualization with status indicators
+- **⚡ Performance**: Efficient handling of large codebases with progress tracking
+- **🔧 Flexible Configuration**: Extensive customization options via command-line arguments
 
-## 安装
+## 🚀 Quick Start
 
-### 方法一：全局安装（推荐）
+### Installation
 
 ```bash
-# 克隆项目
+# Clone and install globally
 git clone <repository-url>
 cd context-packer
-
-# 全局安装
 pip install .
 
-# 或者开发模式安装
-pip install -e .
-```
-
-安装后可以直接使用命令：
-
-```bash
-# 使用完整命令名
+# Now use anywhere
 context-packer /path/to/project
-
-# 或使用简短别名
+# or shorter alias
 ctxpack /path/to/project
 ```
 
-### 方法二：直接运行
+### Basic Usage
 
 ```bash
-# 确保Python 3.6+
-python3 context_packer.py --help
+# Pack current directory
+ctxpack .
+
+# Pack with custom output
+ctxpack /my/project -o project_analysis.md
+
+# Pack with symlink following disabled
+ctxpack . --no-follow-symlinks
+
+# Verbose mode for large projects
+ctxpack . --verbose
 ```
 
-## 使用方法
+## 📖 Advanced Usage
 
-### 基本用法
+### Symlink Handling
+
+Context Packer now intelligently handles symbolic links:
 
 ```bash
-# 打包当前项目（全局安装后）
-context-packer /path/to/your/project
+# Follow symlinks (default behavior)
+ctxpack /project/with/symlinks
 
-# 或使用简短命令
-ctxpack /path/to/your/project
-
-# 指定输出文件
-ctxpack /path/to/your/project -o my_project_context.md
-
-# 直接运行方式
-python3 context_packer.py /path/to/your/project
+# Disable symlink following
+ctxpack /project/with/symlinks --no-follow-symlinks
 ```
 
-### 高级选项
+**Features:**
+- Automatically detects and prevents circular references
+- Visual indicators: 🔗 for symlink files, 🔗📁 for symlink directories
+- Safe recursion with visited path tracking
+
+### Custom Ignore Patterns
 
 ```bash
-# 自定义忽略规则
-ctxpack /path/to/project --ignore "*.log" "temp/*" "private/"
+# Ignore specific patterns
+ctxpack . --ignore "*.log" "temp/*" "secrets.env"
 
-# 调整大小限制
-ctxpack /path/to/project --max-size 20 --max-files 200
+# Combine with gitignore (automatic)
+# .gitignore rules are automatically applied
+```
 
-# 限制目录深度
-ctxpack /path/to/project --max-depth 3
+### Size and Depth Control
 
-# 完整示例
-ctxpack ~/my-react-app \
-  -o react_project_context.md \
-  --ignore "*.test.js" "coverage/" \
+```bash
+# Limit file size and count
+ctxpack . --max-size 20 --max-files 200
+
+# Limit directory traversal depth
+ctxpack . --max-depth 3
+
+# Complete example
+ctxpack ~/large-project \
+  -o analysis.md \
   --max-size 15 \
-  --max-files 150 \
-  --max-depth 4
+  --max-depth 4 \
+  --ignore "*.test.js" \
+  --verbose
 ```
 
-## 输出格式
+## 📋 Output Format
 
-生成的markdown文件包含：
+The generated markdown includes:
 
-1. **项目结构**: 文件树形式展示
-2. **文件内容**: 按重要性排序的文件内容
-3. **语法高亮**: 根据文件类型自动识别语言
-
-示例输出：
-
-```markdown
-# MyProject - 项目上下文
-
-## 项目结构
-
+### 1. Project Structure
 ```
 MyProject
 ├── src/
-│   ├── components/
-│   │   └── Button.tsx
-│   └── utils/
-│       └── helpers.js
-├── package.json
-└── README.md
+│   ├── main.py ✅
+│   └── utils/ 🔗📁
+│       └── helpers.py ☑️
+├── README.md ✅
+└── config.yml ✅
 ```
 
-## 项目文件内容
+### 2. Status Indicators
+- ✅ High priority files (README, package.json, config)
+- ☑️ Medium priority files (source code)
+- 🔗 Symbolic link files
+- 🔗📁 Symbolic link directories
+- ⚠️ Circular reference detected
+- 📊 File too large (truncated)
+- 💾 Binary file (skipped)
 
-### package.json
-
-```json
-{
-  "name": "my-project",
-  "version": "1.0.0"
-}
+### 3. File Contents
+Organized by priority with syntax highlighting:
+```python
+# main.py
+def main():
+    print("Hello, World!")
 ```
 
-### src/components/Button.tsx
+## 🛠️ Command Line Options
 
-```tsx
-import React from 'react';
+| Option | Description | Default |
+|--------|-------------|---------|
+| `project_path` | Project directory to pack | Required |
+| `-o, --output` | Output file path | `{project}_context_{timestamp}.md` |
+| `--ignore` | Additional ignore patterns | None |
+| `--max-size` | Maximum total size (MB) | 10 |
+| `--max-files` | Maximum number of files | 100 |
+| `-L, --max-depth` | Maximum directory depth | Unlimited |
+| `--follow-symlinks` | Follow symbolic links | True |
+| `--no-follow-symlinks` | Don't follow symbolic links | False |
+| `-v, --verbose` | Show detailed progress | False |
 
-export const Button = ({ children, onClick }) => {
-  return <button onClick={onClick}>{children}</button>;
-};
+## 🎯 Use Cases
+
+### AI Code Analysis
+Package your entire codebase for comprehensive AI review:
+```bash
+ctxpack . -o for_ai_review.md --max-size 30
 ```
+
+### Documentation Generation
+Create project overviews for documentation:
+```bash
+ctxpack . --max-depth 2 -o project_overview.md
 ```
 
-## 默认忽略规则
+### Code Sharing
+Share project context without sending entire repositories:
+```bash
+ctxpack ./src --ignore "*.test.*" -o code_context.md
+```
 
-工具会自动忽略以下文件/目录：
+### Security Auditing
+Prepare code for security review (exclude sensitive files):
+```bash
+ctxpack . --ignore ".env*" "*secret*" "*.key" -o security_review.md
+```
 
-- **版本控制**: `.git`, `.svn`, `.hg`
-- **依赖管理**: `node_modules`, `venv`, `__pycache__`
-- **构建产物**: `build`, `dist`, `target`, `.next`
-- **IDE文件**: `.vscode`, `.idea`, `*.swp`
-- **系统文件**: `.DS_Store`, `Thumbs.db`
-- **媒体文件**: `*.jpg`, `*.png`, `*.mp4`, `*.pdf`
-- **压缩文件**: `*.zip`, `*.tar.gz`, `*.rar`
+## ⚡ Performance Tips
 
-## 配置文件支持
+1. **Large Projects**: Use `--verbose` to monitor progress
+2. **Many Files**: Adjust `--max-files` based on your needs
+3. **Deep Structures**: Set `--max-depth` to limit traversal
+4. **Symlink Heavy**: Use `--no-follow-symlinks` if not needed
 
-工具会自动读取项目中的 `.gitignore` 文件，并应用其中的忽略规则。
+## 🔒 Security Considerations
 
-## 使用场景
+- Automatically excludes `.env` files
+- Respects `.gitignore` patterns
+- Use `--ignore` for additional sensitive files
+- Review output before sharing externally
 
-- **AI代码审查**: 让AI一次性分析整个项目
-- **项目文档**: 快速生成项目概览文档
-- **代码分享**: 将项目打包分享给他人
-- **学习研究**: 快速了解开源项目结构
+## 📊 Default Ignore Patterns
 
-## 技术实现
+Automatically excludes:
+- **VCS**: `.git`, `.svn`, `.hg`
+- **Dependencies**: `node_modules`, `venv`, `__pycache__`
+- **Build**: `dist`, `build`, `target`, `.next`
+- **IDE**: `.vscode`, `.idea`, `*.swp`
+- **System**: `.DS_Store`, `Thumbs.db`
+- **Media**: Images, videos, PDFs
+- **Archives**: `.zip`, `.tar.gz`, `.rar`
 
-- **智能文件检测**: 基于扩展名和MIME类型判断文本文件
-- **大小控制**: 多层次的大小限制防止输出过大
-- **优先级排序**: 重要文件（README、package.json）优先包含
-- **内容截断**: 过长文件智能截断，保留开头和结尾
+## 🤝 Contributing
 
-## 命令行参数
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
 
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| `project_path` | 项目文件夹路径 | 必填 |
-| `-o, --output` | 输出文件路径 | `project_context.md` |
-| `--ignore` | 额外忽略模式 | 无 |
-| `--max-size` | 最大总大小(MB) | 10 |
-| `--max-files` | 最大文件数量 | 100 |
-| `-L, --max-depth` | 最大目录层级深度 | 无限制 |
+## 📄 License
 
-## 注意事项
+MIT License - see LICENSE file for details
 
-- 建议在项目根目录运行，以获得最佳效果
-- 大型项目可能需要调整 `--max-size` 参数
-- 敏感信息请通过 `--ignore` 参数排除
-- 生成的文件可能较大，注意AI模型的输入限制
+## 🙏 Acknowledgments
 
-## 许可证
+Built with ❤️ for developers who need to share and analyze code efficiently with AI tools.
 
-MIT License
+---
+
+**Pro Tip**: For best results with AI models like ChatGPT, Claude, or Gemini, keep output under 10MB using `--max-size` parameter.
