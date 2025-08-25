@@ -69,7 +69,7 @@ release: test format
 	@echo "\n📝 Creating git commit..."
 	@git add -A
 	@git commit -m "Release: bump version ($(VERSION))" || echo "No changes to commit"
-	@VERSION=$$(grep 'version = ' pyproject.toml | cut -d'"' -f2) && \
+	@VERSION=$$(grep '^version = ' pyproject.toml | cut -d'"' -f2) && \
 		echo "\n🏷️  Creating tag v$$VERSION..." && \
 		git tag -a "v$$VERSION" -m "Release version $$VERSION" && \
 		echo "\n🚀 Pushing to GitHub..." && \

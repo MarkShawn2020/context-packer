@@ -53,7 +53,7 @@ def main():
     
     # Get new version
     pyproject = Path("pyproject.toml").read_text()
-    version_match = re.search(r'version = "([^"]+)"', pyproject)
+    version_match = re.search(r'^version = "([^"]+)"', pyproject, re.MULTILINE)
     if not version_match:
         print("❌ Could not find version in pyproject.toml")
         sys.exit(1)

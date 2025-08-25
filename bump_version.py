@@ -16,7 +16,7 @@ def bump_version(version_type='patch'):
     content = pyproject_path.read_text()
     
     # Find current version
-    version_match = re.search(r'version = "(\d+)\.(\d+)\.(\d+)"', content)
+    version_match = re.search(r'^version = "(\d+)\.(\d+)\.(\d+)"', content, re.MULTILINE)
     if not version_match:
         print("❌ Could not find version in pyproject.toml")
         return False
@@ -44,9 +44,10 @@ def bump_version(version_type='patch'):
     
     # Update pyproject.toml
     content = re.sub(
-        r'version = "\d+\.\d+\.\d+"',
+        r'^version = "\d+\.\d+\.\d+"',
         f'version = "{new_version}"',
-        content
+        content,
+        flags=re.MULTILINE
     )
     pyproject_path.write_text(content)
     print("✅ Updated pyproject.toml")

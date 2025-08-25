@@ -38,7 +38,7 @@ echo -e "\n${YELLOW}📝 Bumping version (${VERSION_TYPE})...${NC}"
 python bump_version.py $VERSION_TYPE
 
 # Extract new version
-NEW_VERSION=$(grep 'version = ' pyproject.toml | cut -d'"' -f2)
+NEW_VERSION=$(grep '^version = ' pyproject.toml | cut -d'"' -f2)
 echo -e "${GREEN}✅ Version bumped to ${NEW_VERSION}${NC}"
 
 # Git operations
