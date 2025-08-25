@@ -18,39 +18,124 @@ class ContextPacker:
         self.visited_paths = set()  # 防止循环引用
         self.default_ignore_patterns = {
             # 版本控制
-            '.git', '.svn', '.hg',
+            ".git",
+            ".svn",
+            ".hg",
             # 依赖管理
-            'node_modules', 'venv', 'env', '__pycache__', '.pytest_cache',
-            'vendor', 'target', 'build', 'dist', '.next', '.nuxt',
+            "node_modules",
+            "venv",
+            "env",
+            "__pycache__",
+            ".pytest_cache",
+            "vendor",
+            "target",
+            "build",
+            "dist",
+            ".next",
+            ".nuxt",
             # IDE和编辑器
-            '.vscode', '.idea', '*.swp', '*.swo', '*~',
+            ".vscode",
+            ".idea",
+            "*.swp",
+            "*.swo",
+            "*~",
             # 操作系统
-            '.DS_Store', 'Thumbs.db', 'desktop.ini',
+            ".DS_Store",
+            "Thumbs.db",
+            "desktop.ini",
             # 日志和缓存
-            '*.log', '*.tmp', '.cache', '.temp',
+            "*.log",
+            "*.tmp",
+            ".cache",
+            ".temp",
             # 编译产物
-            '*.pyc', '*.pyo', '*.class', '*.o', '*.so', '*.dll',
+            "*.pyc",
+            "*.pyo",
+            "*.class",
+            "*.o",
+            "*.so",
+            "*.dll",
             # 大文件类型
-            '*.zip', '*.tar.gz', '*.rar', '*.7z', '*.pdf',
-            '*.mp4', '*.avi', '*.mov', '*.mp3', '*.wav',
-            '*.jpg', '*.jpeg', '*.png', '*.gif', '*.bmp', '*.svg',
+            "*.zip",
+            "*.tar.gz",
+            "*.rar",
+            "*.7z",
+            "*.pdf",
+            "*.mp4",
+            "*.avi",
+            "*.mov",
+            "*.mp3",
+            "*.wav",
+            "*.jpg",
+            "*.jpeg",
+            "*.png",
+            "*.gif",
+            "*.bmp",
+            "*.svg",
             # 配置文件
-            '.env', '.env.local', '.env.production',
+            ".env",
+            ".env.local",
+            ".env.production",
             # 避免自循环
-            'project_context.md', '*_context.md'
+            "project_context.md",
+            "*_context.md",
         }
 
         self.text_extensions = {
-            '.py', '.js', '.ts', '.jsx', '.tsx', '.vue', '.svelte',
-            '.html', '.htm', '.css', '.scss', '.sass', '.less',
-            '.json', '.xml', '.yaml', '.yml', '.toml', '.ini',
-            '.md', '.txt', '.rst', '.tex',
-            '.c', '.cpp', '.h', '.hpp', '.java', '.cs', '.php',
-            '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
-            '.sh', '.bash', '.zsh', '.fish', '.ps1', '.bat',
-            '.sql', '.r', '.m', '.pl', '.lua', '.dart',
-            '.Dockerfile', '.gitignore', '.gitattributes',
-            '.editorconfig', '.prettierrc', '.eslintrc'
+            ".py",
+            ".js",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".vue",
+            ".svelte",
+            ".html",
+            ".htm",
+            ".css",
+            ".scss",
+            ".sass",
+            ".less",
+            ".json",
+            ".xml",
+            ".yaml",
+            ".yml",
+            ".toml",
+            ".ini",
+            ".md",
+            ".txt",
+            ".rst",
+            ".tex",
+            ".c",
+            ".cpp",
+            ".h",
+            ".hpp",
+            ".java",
+            ".cs",
+            ".php",
+            ".rb",
+            ".go",
+            ".rs",
+            ".swift",
+            ".kt",
+            ".scala",
+            ".sh",
+            ".bash",
+            ".zsh",
+            ".fish",
+            ".ps1",
+            ".bat",
+            ".sql",
+            ".r",
+            ".m",
+            ".pl",
+            ".lua",
+            ".dart",
+            ".Dockerfile",
+            ".gitignore",
+            ".gitattributes",
+            ".editorconfig",
+            ".prettierrc",
+            ".eslintrc",
         }
 
         self.max_file_size = 1024 * 1024  # 1MB
@@ -70,20 +155,21 @@ class ContextPacker:
         if file_path.suffix.lower() in self.text_extensions:
             return True
 
-        if file_path.name in ['Makefile', 'Dockerfile', 'LICENSE', 'README']:
+        if file_path.name in ["Makefile", "Dockerfile", "LICENSE", "README"]:
             return True
 
         try:
             mime_type, _ = mimetypes.guess_type(str(file_path))
-            if mime_type and mime_type.startswith('text/'):
+            if mime_type and mime_type.startswith("text/"):
                 return True
         except Exception:
             pass
 
         return False
 
-    def get_file_tree(self, root_path: Path, ignore_patterns: Set[str],
-                      file_status: Dict[Path, str] = None) -> str:
+    def get_file_tree(
+        self, root_path: Path, ignore_patterns: Set[str], file_status: Dict[Path, str] = None
+    ) -> str:
         """生成项目文件树结构并显示文件状态"""
         if file_status is None:
             file_status = {}
@@ -100,18 +186,20 @@ class ContextPacker:
 
             status = file_status.get(path, "unknown")
             symbols = {
-                "included_high": " ✅",      # 高优先级，已包含
-                "included_medium": " ☑️",    # 中优先级，已包含
-                "included_low": " ✅",       # 低优先级，已包含
-                "skipped_ignored": " ⏭️",    # 被忽略
-                "skipped_binary": " 💾",    # 二进制文件
-                "skipped_large": " 📊",     # 文件过大
-                "skipped_limit": " 🚫",     # 超出数量限制
-                "unknown": ""
+                "included_high": " ✅",  # 高优先级，已包含
+                "included_medium": " ☑️",  # 中优先级，已包含
+                "included_low": " ✅",  # 低优先级，已包含
+                "skipped_ignored": " ⏭️",  # 被忽略
+                "skipped_binary": " 💾",  # 二进制文件
+                "skipped_large": " 📊",  # 文件过大
+                "skipped_limit": " 🚫",  # 超出数量限制
+                "unknown": "",
             }
             return symbols.get(status, "")
 
-        def build_tree(path: Path, prefix: str = "", is_last: bool = True, current_depth: int = 0) -> List[str]:
+        def build_tree(
+            path: Path, prefix: str = "", is_last: bool = True, current_depth: int = 0
+        ) -> List[str]:
             if self.should_ignore(path, ignore_patterns):
                 return []
 
@@ -140,12 +228,15 @@ class ContextPacker:
                 self.visited_paths.add(real_path)
 
                 try:
-                    children = sorted([p for p in path.iterdir()
-                                     if not self.should_ignore(p, ignore_patterns)])
+                    children = sorted(
+                        [p for p in path.iterdir() if not self.should_ignore(p, ignore_patterns)]
+                    )
                     for i, child in enumerate(children):
-                        is_child_last = (i == len(children) - 1)
+                        is_child_last = i == len(children) - 1
                         extension = "    " if is_last else "│   "
-                        lines.extend(build_tree(child, prefix + extension, is_child_last, current_depth + 1))
+                        lines.extend(
+                            build_tree(child, prefix + extension, is_child_last, current_depth + 1)
+                        )
                 except PermissionError:
                     pass
                 finally:
@@ -155,10 +246,11 @@ class ContextPacker:
 
         tree_lines = [root_path.name]
         try:
-            children = sorted([p for p in root_path.iterdir()
-                             if not self.should_ignore(p, ignore_patterns)])
+            children = sorted(
+                [p for p in root_path.iterdir() if not self.should_ignore(p, ignore_patterns)]
+            )
             for i, child in enumerate(children):
-                is_last = (i == len(children) - 1)
+                is_last = i == len(children) - 1
                 tree_lines.extend(build_tree(child, "", is_last, 1))
         except PermissionError:
             tree_lines.append("Permission denied")
@@ -167,14 +259,16 @@ class ContextPacker:
 
     def truncate_content(self, content: str, max_lines: int = 500) -> str:
         """截断过长的文件内容"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         if len(lines) <= max_lines:
             return content
 
-        truncated_lines = lines[:max_lines//2] + \
-                         [f"\n... (省略 {len(lines) - max_lines} 行) ...\n"] + \
-                         lines[-max_lines//2:]
-        return '\n'.join(truncated_lines)
+        truncated_lines = (
+            lines[: max_lines // 2]
+            + [f"\n... (省略 {len(lines) - max_lines} 行) ...\n"]
+            + lines[-max_lines // 2 :]
+        )
+        return "\n".join(truncated_lines)
 
     def get_path_depth(self, path: Path, root_path: Path) -> int:
         """计算路径相对于根目录的深度"""
@@ -184,8 +278,9 @@ class ContextPacker:
         except ValueError:
             return 0
 
-    def collect_files_recursive(self, path: Path, root_path: Path, ignore_patterns: Set[str],
-                                visited: Set[Path] = None) -> List[Path]:
+    def collect_files_recursive(
+        self, path: Path, root_path: Path, ignore_patterns: Set[str], visited: Set[Path] = None
+    ) -> List[Path]:
         """递归收集文件，支持软链接"""
         if visited is None:
             visited = set()
@@ -208,7 +303,11 @@ class ContextPacker:
                     if self.follow_symlinks:
                         if item.is_dir():
                             # 递归处理软链接目录
-                            files.extend(self.collect_files_recursive(item, root_path, ignore_patterns, visited))
+                            files.extend(
+                                self.collect_files_recursive(
+                                    item, root_path, ignore_patterns, visited
+                                )
+                            )
                         else:
                             # 包含软链接文件
                             files.append(item)
@@ -217,17 +316,21 @@ class ContextPacker:
                     files.append(item)
                 elif item.is_dir():
                     # 普通目录，递归处理
-                    files.extend(self.collect_files_recursive(item, root_path, ignore_patterns, visited))
+                    files.extend(
+                        self.collect_files_recursive(item, root_path, ignore_patterns, visited)
+                    )
         except (PermissionError, OSError):
             pass
 
         return files
 
-    def collect_files(self, root_path: Path, ignore_patterns: Set[str]) -> tuple[List[Dict], Dict[Path, str]]:
+    def collect_files(
+        self, root_path: Path, ignore_patterns: Set[str]
+    ) -> tuple[List[Dict], Dict[Path, str]]:
         """收集需要打包的文件并返回文件状态信息"""
         files = []
         total_size = 0
-        skipped_files = {'too_large': 0, 'ignored': 0, 'binary': 0, 'limit': 0, 'depth': 0}
+        skipped_files = {"too_large": 0, "ignored": 0, "binary": 0, "limit": 0, "depth": 0}
         file_status = {}  # 记录每个文件的状态
 
         # 递归收集所有文件（支持软链接）
@@ -243,11 +346,13 @@ class ContextPacker:
             processed += 1
 
             if self.verbose and processed % 50 == 0:
-                print(f"⏳ 处理进度: {processed}/{len(text_files)} ({processed/len(text_files)*100:.1f}%)")
+                print(
+                    f"⏳ 处理进度: {processed}/{len(text_files)} ({processed/len(text_files)*100:.1f}%)"
+                )
 
             if self.should_ignore(file_path, ignore_patterns):
                 file_status[file_path] = "skipped_ignored"
-                skipped_files['ignored'] += 1
+                skipped_files["ignored"] += 1
                 continue
 
             # 检查深度限制
@@ -255,34 +360,34 @@ class ContextPacker:
                 depth = self.get_path_depth(file_path, root_path)
                 if depth > self.max_depth:
                     file_status[file_path] = "skipped_depth"
-                    skipped_files['depth'] += 1
+                    skipped_files["depth"] += 1
                     continue
 
             if not self.is_text_file(file_path):
                 file_status[file_path] = "skipped_binary"
-                skipped_files['binary'] += 1
+                skipped_files["binary"] += 1
                 continue
 
             try:
                 file_size = file_path.stat().st_size
                 if file_size > self.max_file_size:
                     file_status[file_path] = "skipped_large"
-                    skipped_files['too_large'] += 1
+                    skipped_files["too_large"] += 1
                     if self.verbose:
-                        print(f"⚠️  跳过大文件: {file_path.relative_to(root_path)} ({file_size/1024/1024:.1f}MB)")
+                        print(
+                            f"⚠️  跳过大文件: {file_path.relative_to(root_path)} ({file_size/1024/1024:.1f}MB)"
+                        )
                     continue
 
                 if total_size + file_size > self.max_total_size:
-                    print(f"\n⚠️  达到总大小限制 ({self.max_total_size/1024/1024:.1f}MB)，停止收集文件")
+                    print(
+                        f"\n⚠️  达到总大小限制 ({self.max_total_size/1024/1024:.1f}MB)，停止收集文件"
+                    )
                     print(f"已收集 {len(files)} 个文件，总大小 {total_size/1024/1024:.2f}MB")
                     break
 
                 relative_path = file_path.relative_to(root_path)
-                files.append({
-                    'path': relative_path,
-                    'size': file_size,
-                    'full_path': file_path
-                })
+                files.append({"path": relative_path, "size": file_size, "full_path": file_path})
                 total_size += file_size
 
             except (OSError, PermissionError) as e:
@@ -292,12 +397,15 @@ class ContextPacker:
 
         # 按重要性排序
         def get_priority(file_info):
-            path = str(file_info['path']).lower()
-            if any(name in path for name in ['readme', 'package.json', 'requirements.txt', 'cargo.toml']):
+            path = str(file_info["path"]).lower()
+            if any(
+                name in path
+                for name in ["readme", "package.json", "requirements.txt", "cargo.toml"]
+            ):
                 return 0
-            if path.endswith(('.py', '.js', '.ts', '.jsx', '.tsx')):
+            if path.endswith((".py", ".js", ".ts", ".jsx", ".tsx")):
                 return 1
-            if path.endswith(('.md', '.txt', '.json', '.yml', '.yaml')):
+            if path.endswith((".md", ".txt", ".json", ".yml", ".yaml")):
                 return 2
             return 3
 
@@ -305,7 +413,7 @@ class ContextPacker:
 
         # 设置包含文件的状态和优先级
         for i, file_info in enumerate(files):
-            file_path = file_info['full_path']
+            file_path = file_info["full_path"]
             priority = get_priority(file_info)
 
             if i < 100:  # 在限制范围内
@@ -317,7 +425,7 @@ class ContextPacker:
                     file_status[file_path] = "included_low"
             else:  # 超出限制
                 file_status[file_path] = "skipped_limit"
-                skipped_files['limit'] += 1
+                skipped_files["limit"] += 1
 
         limited_files = files[:100]  # 限制文件数量
 
@@ -327,15 +435,16 @@ class ContextPacker:
         print(f"  ⏭️  跳过忽略: {skipped_files['ignored']} 个")
         print(f"  ⏭️  跳过二进制: {skipped_files['binary']} 个")
         print(f"  ⏭️  跳过大文件: {skipped_files['too_large']} 个")
-        if skipped_files['depth'] > 0:
+        if skipped_files["depth"] > 0:
             print(f"  ⏭️  跳过深度: {skipped_files['depth']} 个")
-        if skipped_files['limit'] > 0:
+        if skipped_files["limit"] > 0:
             print(f"  ⏭️  超出限制: {skipped_files['limit']} 个")
 
         return limited_files, file_status
 
-    def pack_project(self, project_path: str, output_path: str = None,
-                    custom_ignore: List[str] = None) -> str:
+    def pack_project(
+        self, project_path: str, output_path: str = None, custom_ignore: List[str] = None
+    ) -> str:
         """打包项目到markdown文件"""
         root_path = Path(project_path).resolve()
         if not root_path.exists():
@@ -346,7 +455,7 @@ class ContextPacker:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             output_path = f"{root_path.name}_context_{timestamp}.md"
             # 确保输出到父目录而不是项目内部
-            if Path(output_path).parent == Path('.'):
+            if Path(output_path).parent == Path("."):
                 output_path = root_path.parent / output_path
 
         output_path = Path(output_path).resolve()
@@ -367,14 +476,14 @@ class ContextPacker:
         ignore_patterns.add(output_path.name)
 
         # 检查是否有项目特定的忽略文件
-        gitignore_path = root_path / '.gitignore'
+        gitignore_path = root_path / ".gitignore"
         if gitignore_path.exists():
             try:
-                with open(gitignore_path, encoding='utf-8') as f:
+                with open(gitignore_path, encoding="utf-8") as f:
                     gitignore_count = 0
                     for line in f:
                         line = line.strip()
-                        if line and not line.startswith('#'):
+                        if line and not line.startswith("#"):
                             ignore_patterns.add(line)
                             gitignore_count += 1
                 if self.verbose and gitignore_count > 0:
@@ -388,7 +497,7 @@ class ContextPacker:
         markdown_content = self.generate_markdown(root_path, ignore_patterns)
 
         try:
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write(markdown_content)
             print(f"\n✅ 项目已成功打包到: {output_path}")
             print(f"📄 文件大小: {output_path.stat().st_size / 1024:.1f}KB")
@@ -427,11 +536,11 @@ class ContextPacker:
 """
 
         for file_info in files:
-            rel_path = file_info['path']
-            full_path = file_info['full_path']
+            rel_path = file_info["path"]
+            full_path = file_info["full_path"]
 
             try:
-                with open(full_path, encoding='utf-8', errors='ignore') as f:
+                with open(full_path, encoding="utf-8", errors="ignore") as f:
                     file_content = f.read()
 
                 # 截断过长内容
@@ -441,13 +550,23 @@ class ContextPacker:
                 # 确定语言类型
                 extension = full_path.suffix.lower()
                 lang_map = {
-                    '.py': 'python', '.js': 'javascript', '.ts': 'typescript',
-                    '.jsx': 'jsx', '.tsx': 'tsx', '.html': 'html',
-                    '.css': 'css', '.scss': 'scss', '.json': 'json',
-                    '.yaml': 'yaml', '.yml': 'yaml', '.xml': 'xml',
-                    '.sh': 'bash', '.sql': 'sql', '.md': 'markdown'
+                    ".py": "python",
+                    ".js": "javascript",
+                    ".ts": "typescript",
+                    ".jsx": "jsx",
+                    ".tsx": "tsx",
+                    ".html": "html",
+                    ".css": "css",
+                    ".scss": "scss",
+                    ".json": "json",
+                    ".yaml": "yaml",
+                    ".yml": "yaml",
+                    ".xml": "xml",
+                    ".sh": "bash",
+                    ".sql": "sql",
+                    ".md": "markdown",
                 }
-                lang = lang_map.get(extension, '')
+                lang = lang_map.get(extension, "")
 
                 content += f"""
 ### {rel_path}
@@ -477,9 +596,10 @@ class ContextPacker:
 
         return content
 
+
 def main():
     parser = argparse.ArgumentParser(
-        description='将项目文件夹打包成单个markdown文件，便于AI分析',
+        description="将项目文件夹打包成单个markdown文件，便于AI分析",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -487,23 +607,22 @@ def main():
   %(prog)s . -o my_project.md                  # 指定输出文件
   %(prog)s . --ignore "*.log" "temp/"          # 自定义忽略规则
   %(prog)s . --max-size 20 --verbose          # 调整大小并显示详细信息
-        """
+        """,
     )
-    parser.add_argument('project_path', help='项目文件夹路径')
-    parser.add_argument('-o', '--output', help='输出文件路径（默认：项目名_context_时间戳.md）')
-    parser.add_argument('--ignore', nargs='*', help='额外的忽略模式')
-    parser.add_argument('--max-size', type=int, default=10,
-                       help='最大总大小(MB，默认：10)')
-    parser.add_argument('--max-files', type=int, default=100,
-                       help='最大文件数量（默认：100）')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                       help='显示详细处理信息')
-    parser.add_argument('-L', '--max-depth', type=int,
-                       help='最大目录层级深度（默认：无限制）')
-    parser.add_argument('--follow-symlinks', action='store_true', default=True,
-                       help='是否跟随软链接目录（默认：是）')
-    parser.add_argument('--no-follow-symlinks', action='store_true',
-                       help='不跟随软链接目录')
+    parser.add_argument("project_path", help="项目文件夹路径")
+    parser.add_argument("-o", "--output", help="输出文件路径（默认：项目名_context_时间戳.md）")
+    parser.add_argument("--ignore", nargs="*", help="额外的忽略模式")
+    parser.add_argument("--max-size", type=int, default=10, help="最大总大小(MB，默认：10)")
+    parser.add_argument("--max-files", type=int, default=100, help="最大文件数量（默认：100）")
+    parser.add_argument("-v", "--verbose", action="store_true", help="显示详细处理信息")
+    parser.add_argument("-L", "--max-depth", type=int, help="最大目录层级深度（默认：无限制）")
+    parser.add_argument(
+        "--follow-symlinks",
+        action="store_true",
+        default=True,
+        help="是否跟随软链接目录（默认：是）",
+    )
+    parser.add_argument("--no-follow-symlinks", action="store_true", help="不跟随软链接目录")
 
     args = parser.parse_args()
 
@@ -517,9 +636,7 @@ def main():
         start_time = datetime.now()
 
         packer.pack_project(
-            project_path=args.project_path,
-            output_path=args.output,
-            custom_ignore=args.ignore or []
+            project_path=args.project_path, output_path=args.output, custom_ignore=args.ignore or []
         )
 
         end_time = datetime.now()
@@ -543,10 +660,12 @@ def main():
         print(f"❌ 未知错误: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     exit(main())
