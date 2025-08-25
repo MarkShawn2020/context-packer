@@ -1,0 +1,109 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "context-packer"
+version = "1.1.0"
+description = "Intelligently package project directories into a single markdown file for AI analysis"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "MarkShawn2020", email = ""},
+]
+maintainers = [
+    {name = "MarkShawn2020", email = ""},
+]
+keywords = [
+    "ai",
+    "context",
+    "markdown",
+    "project",
+    "packaging",
+    "gemini",
+    "claude",
+    "chatgpt",
+    "llm",
+    "code-review",
+    "documentation",
+    "symlinks"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Text Processing :: Markup",
+    "Topic :: Utilities",
+    "Environment :: Console",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/MarkShawn2020/context-packer"
+Documentation = "https://github.com/MarkShawn2020/context-packer#readme"
+Repository = "https://github.com/MarkShawn2020/context-packer.git"
+Issues = "https://github.com/MarkShawn2020/context-packer/issues"
+Changelog = "https://github.com/MarkShawn2020/context-packer/releases"
+
+[project.scripts]
+context-packer = "context_packer:main"
+ctxpack = "context_packer:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["context_packer.py"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "context_packer.py",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+# UV specific configuration
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+    "twine>=4.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false

@@ -3,15 +3,14 @@
 Context Packer - 将项目文件夹打包成单个markdown文件，便于AI分析
 """
 
-import os
 import argparse
-import mimetypes
-from pathlib import Path
-from typing import List, Set, Dict, Optional
-import json
 import fnmatch
-import sys
+import mimetypes
+import os
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Set
+
 
 class ContextPacker:
     def __init__(self):
@@ -40,7 +39,7 @@ class ContextPacker:
             # 避免自循环
             'project_context.md', '*_context.md'
         }
-        
+
         self.text_extensions = {
             '.py', '.js', '.ts', '.jsx', '.tsx', '.vue', '.svelte',
             '.html', '.htm', '.css', '.scss', '.sass', '.less',
@@ -53,42 +52,42 @@ class ContextPacker:
             '.Dockerfile', '.gitignore', '.gitattributes',
             '.editorconfig', '.prettierrc', '.eslintrc'
         }
-        
+
         self.max_file_size = 1024 * 1024  # 1MB
         self.max_total_size = 10 * 1024 * 1024  # 10MB
         self.max_depth = None  # 无限制
         self.verbose = False
-        
+
     def should_ignore(self, path: Path, ignore_patterns: Set[str]) -> bool:
         """检查文件/目录是否应该被忽略"""
         for pattern in ignore_patterns:
             if fnmatch.fnmatch(path.name, pattern) or fnmatch.fnmatch(str(path), pattern):
                 return True
         return False
-    
+
     def is_text_file(self, file_path: Path) -> bool:
         """判断文件是否为文本文件"""
         if file_path.suffix.lower() in self.text_extensions:
             return True
-        
+
         if file_path.name in ['Makefile', 'Dockerfile', 'LICENSE', 'README']:
             return True
-            
+
         try:
             mime_type, _ = mimetypes.guess_type(str(file_path))
             if mime_type and mime_type.startswith('text/'):
                 return True
-        except:
+        except Exception:
             pass
-            
+
         return False
-    
-    def get_file_tree(self, root_path: Path, ignore_patterns: Set[str], 
+
+    def get_file_tree(self, root_path: Path, ignore_patterns: Set[str],
                       file_status: Dict[Path, str] = None) -> str:
         """生成项目文件树结构并显示文件状态"""
         if file_status is None:
             file_status = {}
-        
+
         def get_file_status_symbol(path: Path) -> str:
             """获取文件状态符号"""
             if path.is_symlink():
@@ -98,11 +97,11 @@ class ContextPacker:
                     return " 🔗"  # 软链接文件
             if path.is_dir():
                 return ""
-            
+
             status = file_status.get(path, "unknown")
             symbols = {
                 "included_high": " ✅",      # 高优先级，已包含
-                "included_medium": " ☑️",    # 中优先级，已包含  
+                "included_medium": " ☑️",    # 中优先级，已包含
                 "included_low": " ✅",       # 低优先级，已包含
                 "skipped_ignored": " ⏭️",    # 被忽略
                 "skipped_binary": " 💾",    # 二进制文件
@@ -111,37 +110,37 @@ class ContextPacker:
                 "unknown": ""
             }
             return symbols.get(status, "")
-        
+
         def build_tree(path: Path, prefix: str = "", is_last: bool = True, current_depth: int = 0) -> List[str]:
             if self.should_ignore(path, ignore_patterns):
                 return []
-            
+
             # 检查深度限制
             if self.max_depth is not None and current_depth > self.max_depth:
                 return []
-            
+
             lines = []
             connector = "└── " if is_last else "├── "
             status_symbol = get_file_status_symbol(path)
             lines.append(f"{prefix}{connector}{path.name}{status_symbol}")
-            
+
             if path.is_dir():
                 # 如果是软链接目录且不跟随软链接，则不展开其内容
                 if path.is_symlink() and not self.follow_symlinks:
                     return lines
-                
+
                 # 处理软链接目录
                 real_path = path.resolve() if path.is_symlink() and self.follow_symlinks else path
-                
+
                 # 防止循环引用
                 if real_path in self.visited_paths:
                     lines.append(f"{prefix}    ⚠️ [循环引用，已跳过]")
                     return lines
-                
+
                 self.visited_paths.add(real_path)
-                
+
                 try:
-                    children = sorted([p for p in path.iterdir() 
+                    children = sorted([p for p in path.iterdir()
                                      if not self.should_ignore(p, ignore_patterns)])
                     for i, child in enumerate(children):
                         is_child_last = (i == len(children) - 1)
@@ -151,32 +150,32 @@ class ContextPacker:
                     pass
                 finally:
                     self.visited_paths.discard(real_path)
-            
+
             return lines
-        
+
         tree_lines = [root_path.name]
         try:
-            children = sorted([p for p in root_path.iterdir() 
+            children = sorted([p for p in root_path.iterdir()
                              if not self.should_ignore(p, ignore_patterns)])
             for i, child in enumerate(children):
                 is_last = (i == len(children) - 1)
                 tree_lines.extend(build_tree(child, "", is_last, 1))
         except PermissionError:
             tree_lines.append("Permission denied")
-        
+
         return "\n".join(tree_lines)
-    
+
     def truncate_content(self, content: str, max_lines: int = 500) -> str:
         """截断过长的文件内容"""
         lines = content.split('\n')
         if len(lines) <= max_lines:
             return content
-        
+
         truncated_lines = lines[:max_lines//2] + \
                          [f"\n... (省略 {len(lines) - max_lines} 行) ...\n"] + \
                          lines[-max_lines//2:]
         return '\n'.join(truncated_lines)
-    
+
     def get_path_depth(self, path: Path, root_path: Path) -> int:
         """计算路径相对于根目录的深度"""
         try:
@@ -184,26 +183,26 @@ class ContextPacker:
             return len(relative.parts)
         except ValueError:
             return 0
-    
-    def collect_files_recursive(self, path: Path, root_path: Path, ignore_patterns: Set[str], 
+
+    def collect_files_recursive(self, path: Path, root_path: Path, ignore_patterns: Set[str],
                                 visited: Set[Path] = None) -> List[Path]:
         """递归收集文件，支持软链接"""
         if visited is None:
             visited = set()
-        
+
         files = []
         real_path = path.resolve() if path.is_symlink() else path
-        
+
         # 防止循环引用
         if real_path in visited:
             return files
         visited.add(real_path)
-        
+
         try:
             for item in path.iterdir():
                 if self.should_ignore(item, ignore_patterns):
                     continue
-                
+
                 if item.is_symlink():
                     # 处理软链接
                     if self.follow_symlinks:
@@ -221,36 +220,36 @@ class ContextPacker:
                     files.extend(self.collect_files_recursive(item, root_path, ignore_patterns, visited))
         except (PermissionError, OSError):
             pass
-        
+
         return files
-    
+
     def collect_files(self, root_path: Path, ignore_patterns: Set[str]) -> tuple[List[Dict], Dict[Path, str]]:
         """收集需要打包的文件并返回文件状态信息"""
         files = []
         total_size = 0
         skipped_files = {'too_large': 0, 'ignored': 0, 'binary': 0, 'limit': 0, 'depth': 0}
         file_status = {}  # 记录每个文件的状态
-        
+
         # 递归收集所有文件（支持软链接）
         all_files = self.collect_files_recursive(root_path, root_path, ignore_patterns)
         text_files = [f for f in all_files if f.is_file() or (f.is_symlink() and f.exists())]
-        
+
         if self.verbose:
             print(f"📂 扫描项目: {root_path.name}")
             print(f"📄 发现 {len(text_files)} 个文件")
-        
+
         processed = 0
         for file_path in text_files:
             processed += 1
-            
+
             if self.verbose and processed % 50 == 0:
                 print(f"⏳ 处理进度: {processed}/{len(text_files)} ({processed/len(text_files)*100:.1f}%)")
-            
+
             if self.should_ignore(file_path, ignore_patterns):
                 file_status[file_path] = "skipped_ignored"
                 skipped_files['ignored'] += 1
                 continue
-            
+
             # 检查深度限制
             if self.max_depth is not None:
                 depth = self.get_path_depth(file_path, root_path)
@@ -258,12 +257,12 @@ class ContextPacker:
                     file_status[file_path] = "skipped_depth"
                     skipped_files['depth'] += 1
                     continue
-            
+
             if not self.is_text_file(file_path):
                 file_status[file_path] = "skipped_binary"
                 skipped_files['binary'] += 1
                 continue
-            
+
             try:
                 file_size = file_path.stat().st_size
                 if file_size > self.max_file_size:
@@ -272,12 +271,12 @@ class ContextPacker:
                     if self.verbose:
                         print(f"⚠️  跳过大文件: {file_path.relative_to(root_path)} ({file_size/1024/1024:.1f}MB)")
                     continue
-                
+
                 if total_size + file_size > self.max_total_size:
                     print(f"\n⚠️  达到总大小限制 ({self.max_total_size/1024/1024:.1f}MB)，停止收集文件")
                     print(f"已收集 {len(files)} 个文件，总大小 {total_size/1024/1024:.2f}MB")
                     break
-                
+
                 relative_path = file_path.relative_to(root_path)
                 files.append({
                     'path': relative_path,
@@ -285,12 +284,12 @@ class ContextPacker:
                     'full_path': file_path
                 })
                 total_size += file_size
-                
+
             except (OSError, PermissionError) as e:
                 if self.verbose:
                     print(f"⚠️  无法读取: {file_path.relative_to(root_path)} ({e})")
                 continue
-        
+
         # 按重要性排序
         def get_priority(file_info):
             path = str(file_info['path']).lower()
@@ -301,29 +300,29 @@ class ContextPacker:
             if path.endswith(('.md', '.txt', '.json', '.yml', '.yaml')):
                 return 2
             return 3
-        
+
         files.sort(key=get_priority)
-        
+
         # 设置包含文件的状态和优先级
         for i, file_info in enumerate(files):
             file_path = file_info['full_path']
             priority = get_priority(file_info)
-            
+
             if i < 100:  # 在限制范围内
                 if priority == 0:
                     file_status[file_path] = "included_high"
                 elif priority <= 1:
-                    file_status[file_path] = "included_medium" 
+                    file_status[file_path] = "included_medium"
                 else:
                     file_status[file_path] = "included_low"
             else:  # 超出限制
                 file_status[file_path] = "skipped_limit"
                 skipped_files['limit'] += 1
-        
+
         limited_files = files[:100]  # 限制文件数量
-        
+
         # 输出统计信息
-        print(f"\n📊 文件统计:")
+        print("\n📊 文件统计:")
         print(f"  ✅ 已包含: {len(limited_files)} 个文件 ({total_size/1024/1024:.2f}MB)")
         print(f"  ⏭️  跳过忽略: {skipped_files['ignored']} 个")
         print(f"  ⏭️  跳过二进制: {skipped_files['binary']} 个")
@@ -332,16 +331,16 @@ class ContextPacker:
             print(f"  ⏭️  跳过深度: {skipped_files['depth']} 个")
         if skipped_files['limit'] > 0:
             print(f"  ⏭️  超出限制: {skipped_files['limit']} 个")
-        
+
         return limited_files, file_status
-    
-    def pack_project(self, project_path: str, output_path: str = None, 
+
+    def pack_project(self, project_path: str, output_path: str = None,
                     custom_ignore: List[str] = None) -> str:
         """打包项目到markdown文件"""
         root_path = Path(project_path).resolve()
         if not root_path.exists():
             raise FileNotFoundError(f"❌ 项目路径不存在: {project_path}")
-        
+
         # 处理默认输出路径，避免自循环
         if output_path is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -349,29 +348,29 @@ class ContextPacker:
             # 确保输出到父目录而不是项目内部
             if Path(output_path).parent == Path('.'):
                 output_path = root_path.parent / output_path
-        
+
         output_path = Path(output_path).resolve()
-        
+
         # 检查输出文件是否在项目内部
         try:
             output_path.relative_to(root_path)
-            print(f"⚠️  输出文件在项目内部，可能导致自循环")
-            print(f"建议使用 -o 参数指定项目外的输出路径")
+            print("⚠️  输出文件在项目内部，可能导致自循环")
+            print("建议使用 -o 参数指定项目外的输出路径")
         except ValueError:
             pass  # 输出文件不在项目内部，正常
-        
+
         ignore_patterns = self.default_ignore_patterns.copy()
         if custom_ignore:
             ignore_patterns.update(custom_ignore)
-        
+
         # 添加输出文件到忽略列表
         ignore_patterns.add(output_path.name)
-        
+
         # 检查是否有项目特定的忽略文件
         gitignore_path = root_path / '.gitignore'
         if gitignore_path.exists():
             try:
-                with open(gitignore_path, 'r', encoding='utf-8') as f:
+                with open(gitignore_path, encoding='utf-8') as f:
                     gitignore_count = 0
                     for line in f:
                         line = line.strip()
@@ -380,14 +379,14 @@ class ContextPacker:
                             gitignore_count += 1
                 if self.verbose and gitignore_count > 0:
                     print(f"📋 从 .gitignore 加载 {gitignore_count} 个忽略规则")
-            except:
+            except Exception:
                 pass
-        
+
         print(f"\n🚀 开始打包项目: {root_path.name}")
-        
+
         # 生成输出
         markdown_content = self.generate_markdown(root_path, ignore_patterns)
-        
+
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(markdown_content)
@@ -396,22 +395,22 @@ class ContextPacker:
         except Exception as e:
             print(f"\n❌ 写入文件失败: {e}")
             raise
-        
+
         return markdown_content
-    
+
     def generate_markdown(self, root_path: Path, ignore_patterns: Set[str]) -> str:
         """生成markdown格式的项目内容"""
         project_name = root_path.name
-        
+
         # 重置已访问路径集合
         self.visited_paths = set()
-        
+
         # 收集文件和状态信息
         files, file_status = self.collect_files(root_path, ignore_patterns)
-        
+
         # 生成文件树（包含状态标记）
         file_tree = self.get_file_tree(root_path, ignore_patterns, file_status)
-        
+
         # 生成markdown
         content = f"""# {project_name} - 项目上下文
 
@@ -426,19 +425,19 @@ class ContextPacker:
 本文档包含了 {len(files)} 个主要文件的内容。
 
 """
-        
+
         for file_info in files:
             rel_path = file_info['path']
             full_path = file_info['full_path']
-            
+
             try:
-                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(full_path, encoding='utf-8', errors='ignore') as f:
                     file_content = f.read()
-                
+
                 # 截断过长内容
                 if len(file_content) > 10000:
                     file_content = self.truncate_content(file_content)
-                
+
                 # 确定语言类型
                 extension = full_path.suffix.lower()
                 lang_map = {
@@ -449,7 +448,7 @@ class ContextPacker:
                     '.sh': 'bash', '.sql': 'sql', '.md': 'markdown'
                 }
                 lang = lang_map.get(extension, '')
-                
+
                 content += f"""
 ### {rel_path}
 
@@ -467,7 +466,7 @@ class ContextPacker:
 ```
 
 """
-        
+
         content += f"""
 ---
 
@@ -475,7 +474,7 @@ class ContextPacker:
 *项目路径: {root_path}*
 *生成时间: {os.popen('date').read().strip()}*
 """
-        
+
         return content
 
 def main():
@@ -493,7 +492,7 @@ def main():
     parser.add_argument('project_path', help='项目文件夹路径')
     parser.add_argument('-o', '--output', help='输出文件路径（默认：项目名_context_时间戳.md）')
     parser.add_argument('--ignore', nargs='*', help='额外的忽略模式')
-    parser.add_argument('--max-size', type=int, default=10, 
+    parser.add_argument('--max-size', type=int, default=10,
                        help='最大总大小(MB，默认：10)')
     parser.add_argument('--max-files', type=int, default=100,
                        help='最大文件数量（默认：100）')
@@ -505,30 +504,30 @@ def main():
                        help='是否跟随软链接目录（默认：是）')
     parser.add_argument('--no-follow-symlinks', action='store_true',
                        help='不跟随软链接目录')
-    
+
     args = parser.parse_args()
-    
+
     packer = ContextPacker()
     packer.max_total_size = args.max_size * 1024 * 1024
     packer.max_depth = args.max_depth
     packer.verbose = args.verbose
     packer.follow_symlinks = not args.no_follow_symlinks
-    
+
     try:
         start_time = datetime.now()
-        
+
         packer.pack_project(
             project_path=args.project_path,
             output_path=args.output,
             custom_ignore=args.ignore or []
         )
-        
+
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
-        
+
         if args.verbose:
             print(f"\\n⏱️  总耗时: {duration:.2f}秒")
-        
+
     except FileNotFoundError as e:
         print(f"❌ {e}")
         print("请检查项目路径是否正确")
@@ -546,7 +545,7 @@ def main():
             import traceback
             traceback.print_exc()
         return 1
-    
+
     return 0
 
 if __name__ == '__main__':

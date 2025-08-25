@@ -1,0 +1,26 @@
+# PyPI Configuration Template
+# Copy this file to ~/.pypirc and add your PyPI token
+
+[distutils]
+index-servers =
+    pypi
+    testpypi
+
+[pypi]
+username = __token__
+password = pypi-YOUR_TOKEN_HERE
+
+[testpypi]
+username = __token__
+password = pypi-YOUR_TEST_TOKEN_HERE
+
+# To get your tokens:
+# 1. Go to https://pypi.org/manage/account/token/
+# 2. Create a new API token
+# 3. Replace YOUR_TOKEN_HERE with your actual token
+# 4. Save this file as ~/.pypirc (in your home directory)
+# 5. Set file permissions: chmod 600 ~/.pypirc
+
+# Alternative: Use environment variables
+# export TWINE_USERNAME=__token__
+# export TWINE_PASSWORD=pypi-YOUR_TOKEN_HERE

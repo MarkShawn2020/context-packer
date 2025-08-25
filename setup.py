@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="context-packer",
-    version="1.0.1",
+    version="1.1.0",
     author="Context Packer",
     description="将项目文件夹自动打包成单个markdown文件，便于AI模型分析",
     long_description=long_description,

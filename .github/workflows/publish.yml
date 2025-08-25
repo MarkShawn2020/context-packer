@@ -1,0 +1,95 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest black ruff mypy
+        pip install -e .
+    
+    - name: Lint with ruff
+      run: |
+        ruff check context_packer.py
+    
+    - name: Format check with black
+      run: |
+        black --check context_packer.py
+    
+    - name: Test functionality
+      run: |
+        # Basic functionality test
+        python context_packer.py --help
+        # Test on current directory
+        python context_packer.py . -o test_output.md --max-files 10
+        # Verify output was created
+        test -f test_output.md
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Check package
+      run: twine check dist/*
+    
+    # Skip Test PyPI if you want faster releases
+    # Uncomment below to enable Test PyPI
+    # - name: Publish to Test PyPI
+    #   env:
+    #     TWINE_USERNAME: __token__
+    #     TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+    #   run: |
+    #     twine upload --repository testpypi dist/*
+    #   continue-on-error: true
+    
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload dist/* --skip-existing
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

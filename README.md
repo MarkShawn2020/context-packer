@@ -1,30 +1,49 @@
-# Context Packer
+# Context Packer - The Webpack for AI Context
 
-A powerful Python tool that intelligently packages project directories into a single markdown file, optimized for AI analysis and code review.
+[![PyPI version](https://badge.fury.io/py/context-packer.svg)](https://badge.fury.io/py/context-packer)
+[![Python Support](https://img.shields.io/pypi/pyversions/context-packer.svg)](https://pypi.org/project/context-packer/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/MarkShawn2020/context-packer.svg)](https://github.com/MarkShawn2020/context-packer/stargazers)
 
-## ✨ Features
+> 🎯 **One file, full context** - Package your entire project into a single markdown file optimized for LLMs and documentation.
 
-- **🔗 Symlink Support**: Recursively follows symbolic links with circular reference detection
-- **🎯 Smart Filtering**: Automatically ignores build artifacts, dependencies, and system files
-- **📊 Size Management**: Intelligent file prioritization and content truncation
-- **🌳 Visual Tree**: Clear project structure visualization with status indicators
-- **⚡ Performance**: Efficient handling of large codebases with progress tracking
-- **🔧 Flexible Configuration**: Extensive customization options via command-line arguments
+## 🌟 Why Context Packer?
+
+In the age of AI-powered development, we face a critical challenge: **Large Language Models need complete project context**, but sharing multiple files is cumbersome and inefficient. 
+
+Just as **webpack** revolutionized JavaScript bundling and **esbuild** transformed build speeds, **Context Packer** transforms how we share code with AI models and documentation systems.
+
+### The Problem
+- 📁 **LLMs work best with single-file contexts** - No need to manage multiple uploads
+- 🔄 **Modern documentation systems** (like Next.js) support single-file downloads for offline viewing
+- 🤖 **AI code reviews** require complete project understanding in one shot
+- 📚 **Knowledge sharing** becomes complex with scattered files
+
+### The Solution
+Context Packer intelligently bundles your entire project into a **single, AI-optimized markdown file** - complete with structure visualization, smart filtering, and symlink support for complex project organization.
+
+## ✨ Key Features
+
+- **🔗 Advanced Symlink Support**: Organize complex projects with symbolic links - perfect for selective file inclusion
+- **🎯 AI-Optimized Output**: Formatted specifically for LLM consumption with clear structure and syntax highlighting
+- **📊 Smart Filtering**: Automatically excludes build artifacts, dependencies, and binary files
+- **🌳 Visual Project Tree**: Instant understanding of project structure with status indicators
+- **⚡ Lightning Fast**: Efficient processing even for large codebases
+- **🔧 Highly Configurable**: Fine-tune output with extensive options
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-# Clone and install globally
-git clone <repository-url>
-cd context-packer
-pip install .
+# Using pip
+pip install context-packer
 
-# Now use anywhere
-context-packer /path/to/project
-# or shorter alias
-ctxpack /path/to/project
+# Using uv (10-100x faster)
+uv pip install context-packer
+
+# Using pipx (isolated environment)
+pipx install context-packer
 ```
 
 ### Basic Usage
@@ -33,172 +52,239 @@ ctxpack /path/to/project
 # Pack current directory
 ctxpack .
 
-# Pack with custom output
-ctxpack /my/project -o project_analysis.md
+# Pack specific project
+ctxpack /path/to/project -o project_context.md
 
-# Pack with symlink following disabled
-ctxpack . --no-follow-symlinks
-
-# Verbose mode for large projects
-ctxpack . --verbose
+# Pack with custom settings
+ctxpack . --max-size 20 --ignore "*.test.js" "docs/*"
 ```
 
-## 📖 Advanced Usage
+## 🎨 Advanced: The Symlink Workflow
 
-### Symlink Handling
+Context Packer's **symlink support** enables a powerful workflow for complex projects where you need fine-grained control over what gets packed.
 
-Context Packer now intelligently handles symbolic links:
+### Scenario: Selective Project Packing
+
+Instead of using complex ignore patterns, create a "packing directory" with symlinks to exactly what you need:
 
 ```bash
-# Follow symlinks (default behavior)
-ctxpack /project/with/symlinks
+# Create a packing directory
+mkdir my-project-pack
+cd my-project-pack
 
-# Disable symlink following
-ctxpack /project/with/symlinks --no-follow-symlinks
+# Symlink specific files and directories
+ln -s ../src/core core
+ln -s ../src/utils/helpers.js helpers.js
+ln -s ../config config
+ln -s ../package.json package.json
+ln -s ../README.md README.md
+
+# Pack only what you've selected
+ctxpack . -o ../my-project-context.md
 ```
 
-**Features:**
-- Automatically detects and prevents circular references
-- Visual indicators: 🔗 for symlink files, 🔗📁 for symlink directories
-- Safe recursion with visited path tracking
-
-### Custom Ignore Patterns
+### Real-World Example: Multi-Module Project
 
 ```bash
-# Ignore specific patterns
-ctxpack . --ignore "*.log" "temp/*" "secrets.env"
+# You have a monorepo with multiple packages
+project/
+├── packages/
+│   ├── frontend/     # React app
+│   ├── backend/      # Node.js API  
+│   ├── shared/       # Shared utilities
+│   └── mobile/       # React Native app
 
-# Combine with gitignore (automatic)
-# .gitignore rules are automatically applied
+# Create a context for AI review of web platform only
+mkdir web-platform-context
+cd web-platform-context
+
+# Link only web-related packages
+ln -s ../packages/frontend frontend
+ln -s ../packages/backend backend  
+ln -s ../packages/shared shared
+ln -s ../docker-compose.yml docker-compose.yml
+ln -s ../.env.example .env.example
+
+# Generate context
+ctxpack . -o web-platform.md --follow-symlinks
 ```
 
-### Size and Depth Control
-
-```bash
-# Limit file size and count
-ctxpack . --max-size 20 --max-files 200
-
-# Limit directory traversal depth
-ctxpack . --max-depth 3
-
-# Complete example
-ctxpack ~/large-project \
-  -o analysis.md \
-  --max-size 15 \
-  --max-depth 4 \
-  --ignore "*.test.js" \
-  --verbose
-```
+This approach gives you **surgical precision** in creating contexts for different purposes:
+- 🎯 **Code Review Context**: Only the files changed in a PR
+- 🏗️ **Architecture Context**: High-level structure without implementation details  
+- 🐛 **Debug Context**: Specific module with its dependencies
+- 📖 **Documentation Context**: README files and examples only
 
 ## 📋 Output Format
 
-The generated markdown includes:
+Context Packer generates a structured markdown file with:
 
-### 1. Project Structure
+### 1. Project Structure Visualization
 ```
 MyProject
 ├── src/
-│   ├── main.py ✅
-│   └── utils/ 🔗📁
-│       └── helpers.py ☑️
-├── README.md ✅
-└── config.yml ✅
+│   ├── index.js ✅      # High-priority file
+│   ├── utils/ 🔗📁      # Symlinked directory
+│   │   └── helper.js ☑️  # Included file
+│   └── tests/ ⏭️        # Ignored directory
+├── package.json ✅      # Configuration file
+└── README.md ✅         # Documentation
 ```
 
 ### 2. Status Indicators
-- ✅ High priority files (README, package.json, config)
-- ☑️ Medium priority files (source code)
-- 🔗 Symbolic link files
-- 🔗📁 Symbolic link directories
+- ✅ High-priority files (configs, README)
+- ☑️ Source code files
+- 🔗 Symbolic links
+- 🔗📁 Symlinked directories  
 - ⚠️ Circular reference detected
-- 📊 File too large (truncated)
-- 💾 Binary file (skipped)
+- 📊 Large files (truncated)
+- ⏭️ Ignored files
 
-### 3. File Contents
-Organized by priority with syntax highlighting:
-```python
-# main.py
-def main():
-    print("Hello, World!")
+### 3. Complete File Contents
+Each file is presented with:
+- Relative path
+- Syntax highlighting
+- Smart truncation for large files
+- Clear section separators
+
+## 🎯 Perfect For
+
+### 🤖 AI Development
+```bash
+# Prepare context for AI analysis
+ctxpack . -o for_claude.md --max-size 30
+
+# Get AI to review your architecture
+ctxpack src/ -o architecture_review.md --max-depth 2
+```
+
+### 📚 Documentation
+```bash
+# Create offline documentation bundle
+ctxpack docs/ -o documentation.md --ignore "*.png" "*.jpg"
+```
+
+### 🔍 Code Review
+```bash
+# Package PR changes for review
+ctxpack . -o pr_context.md --ignore "node_modules" "*.test.*"
+```
+
+### 🎓 Learning & Teaching
+```bash
+# Create educational material
+ctxpack examples/ -o tutorial_code.md --max-files 20
 ```
 
 ## 🛠️ Command Line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `project_path` | Project directory to pack | Required |
+| `project_path` | Directory to pack | Required |
 | `-o, --output` | Output file path | `{project}_context_{timestamp}.md` |
 | `--ignore` | Additional ignore patterns | None |
 | `--max-size` | Maximum total size (MB) | 10 |
 | `--max-files` | Maximum number of files | 100 |
 | `-L, --max-depth` | Maximum directory depth | Unlimited |
-| `--follow-symlinks` | Follow symbolic links | True |
-| `--no-follow-symlinks` | Don't follow symbolic links | False |
-| `-v, --verbose` | Show detailed progress | False |
-
-## 🎯 Use Cases
-
-### AI Code Analysis
-Package your entire codebase for comprehensive AI review:
-```bash
-ctxpack . -o for_ai_review.md --max-size 30
-```
-
-### Documentation Generation
-Create project overviews for documentation:
-```bash
-ctxpack . --max-depth 2 -o project_overview.md
-```
-
-### Code Sharing
-Share project context without sending entire repositories:
-```bash
-ctxpack ./src --ignore "*.test.*" -o code_context.md
-```
-
-### Security Auditing
-Prepare code for security review (exclude sensitive files):
-```bash
-ctxpack . --ignore ".env*" "*secret*" "*.key" -o security_review.md
-```
+| `--follow-symlinks` | Follow symbolic links | Yes |
+| `--no-follow-symlinks` | Don't follow symbolic links | No |
+| `-v, --verbose` | Show detailed progress | No |
 
 ## ⚡ Performance Tips
 
-1. **Large Projects**: Use `--verbose` to monitor progress
-2. **Many Files**: Adjust `--max-files` based on your needs
-3. **Deep Structures**: Set `--max-depth` to limit traversal
-4. **Symlink Heavy**: Use `--no-follow-symlinks` if not needed
+1. **Large Codebases**: Use `--verbose` to monitor progress
+2. **Selective Packing**: Use symlinks for precise control
+3. **Size Management**: Adjust `--max-size` based on LLM limits
+4. **Speed Optimization**: Use `--max-depth` to limit traversal
 
-## 🔒 Security Considerations
+## 🔒 Security & Best Practices
 
-- Automatically excludes `.env` files
-- Respects `.gitignore` patterns
-- Use `--ignore` for additional sensitive files
-- Review output before sharing externally
+- **Automatic Exclusions**: `.env`, `.git`, `node_modules` are ignored by default
+- **Gitignore Respect**: Honors your `.gitignore` patterns
+- **Size Limits**: Prevents accidental huge outputs
+- **Review Before Sharing**: Always check output before sending to third parties
 
-## 📊 Default Ignore Patterns
+## 🧑‍💻 Development
 
-Automatically excludes:
-- **VCS**: `.git`, `.svn`, `.hg`
-- **Dependencies**: `node_modules`, `venv`, `__pycache__`
-- **Build**: `dist`, `build`, `target`, `.next`
-- **IDE**: `.vscode`, `.idea`, `*.swp`
-- **System**: `.DS_Store`, `Thumbs.db`
-- **Media**: Images, videos, PDFs
-- **Archives**: `.zip`, `.tar.gz`, `.rar`
+### Setting up with UV (Recommended)
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone and setup
+git clone https://github.com/MarkShawn2020/context-packer.git
+cd context-packer
+
+# Install in development mode
+uv pip install -e .
+uv pip install -r requirements-dev.txt
+
+# Run tests
+uv run pytest
+```
+
+### Quick Commands
+```bash
+make test      # Run tests
+make lint      # Check code quality
+make format    # Format code
+make build     # Build package
+make publish   # Publish to PyPI
+```
+
+## 📦 Publishing
+
+With PyPI token configured:
+
+```bash
+# One-command publish (with version bump)
+make release VERSION=patch  # or minor, major
+
+# Or manual steps
+python bump_version.py patch
+git commit -am "Bump version"
+git tag v1.2.3
+git push --tags
+make publish
+```
+
+## 🌍 Ecosystem
+
+Context Packer is part of the modern AI development workflow:
+
+- **Use with Claude, GPT-4, Gemini** for code analysis
+- **Integrate with CI/CD** for automatic documentation
+- **Combine with AI editors** like Cursor, Windsurf
+- **Works with documentation systems** like Docusaurus, Next.js
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+We welcome contributions! Context Packer is designed to be the definitive solution for project context packaging.
+
+### Ideas for Contribution
+- 🎨 GUI interface (planned)
+- 🔌 Plugin system for custom processors
+- 🌐 Web service API
+- 📊 Context analytics
+- 🔄 Incremental packing
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-Built with ❤️ for developers who need to share and analyze code efficiently with AI tools.
+Created by [MarkShawn2020](https://github.com/MarkShawn2020) to solve the real-world challenge of sharing complete project context with AI models. Inspired by the elegance of webpack and the speed of esbuild, Context Packer brings the same innovation to AI-assisted development.
 
 ---
 
-**Pro Tip**: For best results with AI models like ChatGPT, Claude, or Gemini, keep output under 10MB using `--max-size` parameter.
+<div align="center">
+
+**🚀 Transform how you share code with AI**
+
+[Documentation](https://github.com/MarkShawn2020/context-packer#readme) • 
+[Issues](https://github.com/MarkShawn2020/context-packer/issues) • 
+[PyPI](https://pypi.org/project/context-packer/) • 
+[Releases](https://github.com/MarkShawn2020/context-packer/releases)
+
+</div>
