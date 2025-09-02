@@ -102,6 +102,7 @@ class ContextPacker:
             ".toml",
             ".ini",
             ".md",
+            ".mdx",
             ".txt",
             ".rst",
             ".tex",
@@ -565,6 +566,7 @@ class ContextPacker:
                     ".sh": "bash",
                     ".sql": "sql",
                     ".md": "markdown",
+                    ".mdx": "mdx",
                 }
                 lang = lang_map.get(extension, "")
 
@@ -607,11 +609,13 @@ def main():
   %(prog)s . -o my_project.md                  # 指定输出文件
   %(prog)s . --ignore "*.log" "temp/"          # 自定义忽略规则
   %(prog)s . --max-size 20 --verbose          # 调整大小并显示详细信息
+  %(prog)s . --suffixes .mdx .vue .astro       # 添加额外的文件后缀
         """,
     )
     parser.add_argument("project_path", help="项目文件夹路径")
     parser.add_argument("-o", "--output", help="输出文件路径（默认：项目名_context_时间戳.md）")
     parser.add_argument("--ignore", nargs="*", help="额外的忽略模式")
+    parser.add_argument("--suffixes", nargs="*", help="要包含的额外文件后缀列表（例如：.mdx .vue .astro）")
     parser.add_argument("--max-size", type=int, default=10, help="最大总大小(MB，默认：10)")
     parser.add_argument("--max-files", type=int, default=100, help="最大文件数量（默认：100）")
     parser.add_argument("-v", "--verbose", action="store_true", help="显示详细处理信息")
@@ -631,6 +635,14 @@ def main():
     packer.max_depth = args.max_depth
     packer.verbose = args.verbose
     packer.follow_symlinks = not args.no_follow_symlinks
+    
+    # 处理自定义后缀列表
+    if args.suffixes:
+        for suffix in args.suffixes:
+            # 确保后缀以点开头
+            if not suffix.startswith('.'):
+                suffix = '.' + suffix
+            packer.text_extensions.add(suffix.lower())
 
     try:
         start_time = datetime.now()
